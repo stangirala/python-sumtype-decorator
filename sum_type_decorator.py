@@ -103,22 +103,3 @@ def check_match_decorator(enum_to_check):
         assert test_ast(parse_tree, enum_to_check)
         return func
     return actual_decorator
-
-MurderByNumbers = Enum('one', 'two', 'three')
-
-@check_match_decorator(MurderByNumbers)
-def match_enum(enum):
-    if enum == 'one':
-        pass
-    elif enum == 'two':
-        pass
-    elif enum == 'three':
-        pass
-
-# will throw assertion error
-@check_match_decorator(MurderByNumbers)
-def bad_match_enum(enum):
-    if enum == 'one':
-        pass
-    elif enum == 'two':
-        pass
