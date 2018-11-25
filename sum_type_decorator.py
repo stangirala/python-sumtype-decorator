@@ -22,7 +22,8 @@ def state_machine(node, enum_to_check):
     assert len(function_node.body) == 1
     enum_match_list = _get_enum_match_list_to_check(function_node.body[0], enum_var)
 
-    assert enum_to_check.enum_list == enum_match_list
+    assert enum_to_check.enum_list == enum_match_list, \
+        ('enum list: expected, actual,', enum_to_check.enum_list, enum_match_list)
 
     return True
 
@@ -45,8 +46,13 @@ def _get_enum_match_list_to_check(node, enum_var):
         assert type(test_expression) is _ast.Compare
 
         left = test_expression.left
-        assert type(left) is _ast.Name
-        assert left.id == enum_var
+        if type(left) is _ast.Name:
+            assert left.id == enum_var
+        elif type(left) is _ast.Attribute:
+            assert left.value.id == enum_var
+        else:
+            print(ast.dump(left))
+            assert 'if expression type was neither Name not Attribute'
 
         assert len(test_expression.ops) == 1
         assert type(test_expression.ops[0]) is _ast.Eq
