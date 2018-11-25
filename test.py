@@ -26,3 +26,21 @@ def test_sad():
     except AssertionError:
         pass
         
+def match_enum_with_extra_code(enum):
+    if enum == 'one':
+        pass
+    elif enum == 'two':
+        pass
+    elif enum == 'three':
+        pass
+
+    k = lambda x: None
+    k()
+    return None
+
+def test_match_enum_with_extra_code():
+    try:
+        check_match_decorator(MurderByNumbers)(bad_match_enum)
+        assert False
+    except AssertionError:
+        pass
