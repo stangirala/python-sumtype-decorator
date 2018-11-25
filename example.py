@@ -11,7 +11,7 @@ def match_enum(enum):
     elif enum == 'three':
         pass
 
-# Will throw exception
+print('\n---Will throw exception')
 @check_match_decorator(MurderByNumbers)
 def bad_match_enum(enum):
     if enum == 'one':

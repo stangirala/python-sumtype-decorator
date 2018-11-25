@@ -10,41 +10,30 @@ class Enum(object):
 
         self.enum_list = list(args)
 
-def state_machine(node, enum_to_check, state='', enum_var=None):
-    if state is '':
-        assert type(node) is _ast.Module
-        state = 'module'
-    elif state is 'module':
-        assert type(node) is _ast.FunctionDef
-        state = 'function'
-    elif state is 'function':
-        _check_node_for_state_function(node)
-        enum_var = node.args[0].id
-        state = 'match_branch'
-    elif state is 'match_branch':
-        enum_match_list = _get_enum_match_list_to_check(
-                node=node,
-                enum_var=enum_var
-        )
-        assert enum_to_check.enum_list == enum_match_list, \
-                ('enum states expected & actual', enum_to_check.enum_list, enum_match_list)
-            
-        state = 'done_match'
-    elif state is 'done_match':
-        # TODO iterate other nodes and verify there isn't an if condition or other
-        # code basically
-        state = 'done'
-    else:
-        assert False, 'unknown state'
+def state_machine(node, enum_to_check):
+    assert type(node) is _ast.Module
 
-    return state, enum_var
+    module_children = list(ast.iter_child_nodes(node))
+    assert len(module_children) == 1
 
-def _check_node_for_state_function(node):
+    function_node = module_children[0]
+    enum_var = _get_enum_name_from_function_node(function_node.args)
+
+    assert len(function_node.body) == 1
+    enum_match_list = _get_enum_match_list_to_check(function_node.body[0], enum_var)
+
+    assert enum_to_check.enum_list == enum_match_list
+
+    return True
+
+def _get_enum_name_from_function_node(node):
     assert type(node) is _ast.arguments
     assert len(node.args) == 1
     assert node.defaults == []
     assert node.kwarg is None
     assert node.vararg is None
+
+    return node.args[0].id
 
 def _get_enum_match_list_to_check(node, enum_var):
     itr_node = node
@@ -73,33 +62,14 @@ def _get_enum_match_list_to_check(node, enum_var):
 
     return enum_match_list
 
-
-def parse_ast(func):
-    source = inspect.getsource(func)
-    return ast.parse(source=source, filename='raw_source')
-
-def test_ast(parse_tree, enum_to_check):
-    state = ''
-    enum_var = None
-    for node in ast.walk(parse_tree):
-        if state is 'done':
-            break
-        state, enum_var = state_machine(
-                node=node,
-                enum_to_check=enum_to_check,
-                state=state,
-                enum_var=enum_var
-        )
-
-    if state is 'done':
-        return True
-    return False
-
 def check_match_decorator(enum_to_check):
     assert enum_to_check
 
     def actual_decorator(func):
-        parse_tree = parse_ast(func)
-        assert test_ast(parse_tree, enum_to_check)
+        source = inspect.getsource(func)
+        parse_tree = ast.parse(source=source, filename='raw_source')
+
+        assert state_machine(node=parse_tree, enum_to_check=enum_to_check)
+
         return func
     return actual_decorator
